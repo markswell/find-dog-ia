@@ -1,10 +1,56 @@
 # find-dog-ia
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+This project intent to create AI assistant that helps people to find a dog to adopt.
 
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
+## Idea
 
-## Running the application in dev mode
+I use mainly integration between java and langchain4j to generate AI models integration.
+
+## Architecture
+
+I use RAG architecture in this project in this way: 
+ 
+```
+User Message
+     ↓
+PreferenceExtractor (LLM)
+     ↓
+UserProfile Memory
+     ↓
+DogAssistant (LangChain4j)
+     ↓
+PersonalizedRetrievalAugmentor
+     ↓
+Hybrid Retrieval
+   ├─ Neo4j Graph Retrieval
+   └─ Vector Retrieval (EmbeddingStore)
+     ↓
+Custom Reranking
+     ↓
+Structured Context Builder
+     ↓
+LLM
+```
+
+## Local use configuration
+
+### You need have a docker-compose installed
+
+```shell script
+docker-compose -f ./config/environment-compose.yaml up -d
+```
+
+### You need have a local ollama instance
+
+```shell Strinm
+ollama run gpt-oss:20b
+```
+
+#### obs: to run ollama to gpt-oss:20b requires almost 17 GB of RAM so you can use someone else model like phi3:latest changing the configuration at application.yaml
+
+#### obs 2: Use LLM model locally can be really slow, to real product you could use a real LLM  provider like 'OpenAI' or 'Deepseek'
+
+### Running the application in dev mode
 
 You can run your application in dev mode that enables live coding using:
 
@@ -52,17 +98,4 @@ Or, if you don't have GraalVM installed, you can run the native executable build
 You can then execute your native executable with: `./build/find-dog-ia-1.0.0-SNAPSHOT-runner`
 
 If you want to learn more about building native executables, please consult <https://quarkus.io/guides/gradle-tooling>.
-
-## Related Guides
-
-- REST ([guide](https://quarkus.io/guides/rest)): A Jakarta REST implementation utilizing build time processing and Vert.x. This extension is not compatible with the quarkus-resteasy extension, or any of the extensions that depend on it.
-- LangChain4j Ollama ([guide](https://docs.quarkiverse.io/quarkus-langchain4j/dev/guide-ollama.html)): Provides the basic integration of Ollama with LangChain4j
-- LangChain4j pgvector embedding store ([guide](https://docs.quarkiverse.io/quarkus-langchain4j/dev/index.html)): Provides the pgvector Embedding store for Quarkus LangChain4j
-
-## Provided Code
-
-### REST
-
-Easily start your REST Web Services
-
-[Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
+''
