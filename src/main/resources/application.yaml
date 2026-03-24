@@ -1,0 +1,14 @@
+quarkus:
+  langchain4j:
+    ollama:
+      base-url: http://localhost:11434/
+      chat-model:
+        model-id: gpt-oss
+        timeout: 3000s
+      embedding-model:
+        model-id: nomic-embed-text
+  neo4j:
+    uri: bolt://localhost:7687
+    authentication:
+      username: neo4j
+      password: test1234

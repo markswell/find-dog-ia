@@ -9,11 +9,12 @@ repositories {
 }
 
 dependencies {
+    implementation 'io.quarkiverse.langchain4j:quarkus-langchain4j-neo4j'
+    implementation 'io.quarkiverse.neo4j:quarkus-neo4j:6.4.1'
     implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
     implementation enforcedPlatform("${quarkusPlatformGroupId}:quarkus-langchain4j-bom:${quarkusPlatformVersion}")
     implementation 'io.quarkus:quarkus-rest'
     implementation 'io.quarkiverse.langchain4j:quarkus-langchain4j-ollama'
-    implementation 'io.quarkiverse.langchain4j:quarkus-langchain4j-pgvector'
     implementation 'io.quarkus:quarkus-arc'
     testImplementation 'io.quarkus:quarkus-junit'
     testImplementation 'io.rest-assured:rest-assured'
