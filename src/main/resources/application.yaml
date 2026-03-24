@@ -1,12 +1,15 @@
 quarkus:
   langchain4j:
+    neo4j:
+      dimension: 768
     ollama:
       base-url: http://localhost:11434/
+      timeout: 3000s
       chat-model:
         model-id: gpt-oss
-        timeout: 3000s
       embedding-model:
         model-id: nomic-embed-text
+
   neo4j:
     uri: bolt://localhost:7687
     authentication:
