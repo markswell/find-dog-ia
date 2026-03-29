@@ -17,6 +17,7 @@ import org.neo4j.driver.Session;
 
 import java.nio.file.Paths;
 import java.security.MessageDigest;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -52,6 +53,7 @@ public class DocumentRagIngest {
                 .embeddingModel(embeddingModel)
                 .embeddingStore(store)
                 .build();
+
         try(ExecutorService executorService = newVirtualThreadPerTaskExecutor()) {
             documents.forEach(d -> executorService.execute(() -> {
                 try {
@@ -73,10 +75,10 @@ public class DocumentRagIngest {
 
     private String hash(String content) throws Exception {
 
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        var digest = MessageDigest.getInstance("SHA-256");
         byte[] encoded = digest.digest(content.getBytes());
 
-        return java.util.HexFormat.of().formatHex(encoded);
+        return HexFormat.of().formatHex(encoded);
     }
 
     public boolean documentExists(String hash) {

@@ -9,6 +9,8 @@ repositories {
 }
 
 dependencies {
+    implementation 'io.quarkus:quarkus-oidc'
+    implementation 'io.quarkus:quarkus-config-yaml'
     implementation 'io.quarkiverse.langchain4j:quarkus-langchain4j-neo4j'
     implementation 'io.quarkiverse.neo4j:quarkus-neo4j:6.4.1'
     implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")

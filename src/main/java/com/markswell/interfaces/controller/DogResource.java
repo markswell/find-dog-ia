@@ -1,8 +1,12 @@
 package com.markswell.interfaces.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.markswell.interfaces.service.DogAssistant;
 import com.markswell.interfaces.service.PreferenceExtractor;
 import com.markswell.interfaces.service.UserProfileService;
+import io.quarkus.oidc.runtime.OidcJwtCallerPrincipal;
+import io.quarkus.security.identity.SecurityIdentity;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
@@ -22,15 +26,20 @@ public class DogResource {
     @Inject
     private UserProfileService profileService;
 
+    @Inject
+    SecurityIdentity identity;
+
     @POST
+    @RolesAllowed("user")
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.TEXT_PLAIN)
     public String chat(String message) {
+
         System.out.println(message);
         String extracted = extractor.extract(message);
-
-        profileService.updateProfile("vsde", extracted);
-        return dogAssistant.chat("vsde", message);
+        String user = identity.getPrincipal().getName();
+        profileService.updateProfile(user, extracted);
+        return dogAssistant.chat(user, message);
     }
 
 }

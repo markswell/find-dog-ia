@@ -1,4 +1,5 @@
 quarkus:
+  level: INFO
   langchain4j:
     neo4j:
       dimension: 768
@@ -15,3 +16,23 @@ quarkus:
     authentication:
       username: neo4j
       password: test1234
+
+  oidc:
+    auth-server-url: http://localhost:8088/realms/find-dog-ia
+    application-type: service
+    client-id: find-dog-client-id
+    credentials:
+      secret: LHJe20fo3Nx4y0SwoXD8sqbAeSkFAVKH
+    roles:
+      role-claim-path: realm_access/roles
+      role-claim-separator: " "
+
+  http:
+    auth:
+      permission:
+        public:
+          paths: /hello
+          policy: permit
+        secured:
+          paths: /*
+          policy: authenticated
