@@ -40,6 +40,16 @@ LLM
 docker-compose -f ./config/environment-compose.yaml up -d
 ```
 
+### User configuration
+
+I've configured a authentication server with keycloak, but you need create a user at:
+
+
+[Local keycloak](http://localhost:8088/admin/master/console/#/find-dog-ia)
+
+#### obs: to local configuration i've used user and password "admin"
+
+
 ### You need have a local ollama instance
 
 ```shell Strinm
