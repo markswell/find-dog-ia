@@ -17,35 +17,59 @@ public class PersonalizedGraphRagService {
     @Inject
     UserProfileService profileService;
 
-    public List<String> search(String userId, String question) {
+    public List<String> search(String userId, List<String> question) {
 
         UserProfile profile = profileService.get(userId);
 
-        StringBuilder cypher = new StringBuilder("""
-            MATCH (d:Dog)
-            WHERE 1=1
-        """);
+        String cypher = """
+                        MATCH (d:Dog)
+                             OPTIONAL MATCH (d)-[:HAS_SIZE]->(s:Size)
+                             OPTIONAL MATCH (d)-[:GOOD_FOR]->(e:Environment)
+                        
+                             WITH d, s, e,
+                        
+                             CASE
+                                 WHEN size($portes) = 0 THEN 0
+                                 WHEN ANY(x IN $portes WHERE toLower(s.name) CONTAINS toLower(x)) THEN 1
+                                 ELSE 0
+                             END AS sizeScore,
+                        
+                             CASE
+                                 WHEN size($ambientes) = 0 THEN 0
+                                 WHEN ANY(x IN $ambientes WHERE toLower(e.name) CONTAINS toLower(x)) THEN 1
+                                 ELSE 0
+                             END AS envScore
+                        
+                             WITH d,
+                             sizeScore,
+                             envScore,
+                             (sizeScore + envScore) AS totalScore
+                        
+                             WHERE
+                                 (size($portes) > 0 OR size($ambientes) > 0)
+                        
+                             AND
+                                 totalScore > 0
+                        
+                             RETURN
+                                 d.nome AS nome
+                        
+                             ORDER BY
+                                 totalScore DESC,
+                                 sizeScore DESC,
+                                 envScore DESC,
+                                 nome ASC
+                        
+                             LIMIT 10
+                        """;
 
-        Map<String, Object> params = new java.util.HashMap<>();
+        Map<String,Object> params = Map.of(
+                "portes", question,
+                "ambientes", question
+        );
 
-        params.put("question", question);
-
-        if (!profile.getPortes().isEmpty()) {
-            cypher.append(" AND d.porte IN $portes");
-            params.put("portes", profile.getPortes());
-        }
-
-        if (!profile.getAmbientes().isEmpty()) {
-            cypher.append(" AND d.ambiente IN $ambientes");
-            params.put("ambientes", profile.getAmbientes());
-        }
-
-        cypher.append(" AND toLower(d.descricao) CONTAINS toLower($question)");
-        cypher.append(" RETURN d.nome AS nome");
-
-        List<Map<String, Object>> result = graph.query(cypher.toString(), params);
-
-        return result.stream()
+        return graph.query(cypher, params)
+                .stream()
                 .map(r -> r.get("nome").toString())
                 .toList();
     }

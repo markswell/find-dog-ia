@@ -12,7 +12,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -32,12 +32,11 @@ public class PersonalizedRetrievalAugmentor implements RetrievalAugmentor, Suppl
     public AugmentationResult augment(AugmentationRequest request) {
 
         String userId = request.metadata().chatMemoryId().toString();
-        String question = request.chatMessage().toString()
-                .replaceAll("^*\\{", "")
-                .replace("}", "");
+
+        String question = getQuestion(request);
 
         // 🔥 busca no grafo
-        List<String> dogs = graphRag.search(userId, question);
+        List<String> dogs = graphRag.search(userId, questionAsStringList(question));
 
         // 🔥 embedding da query
         var queryEmbedding = embeddingModel.embed(question).content();
@@ -95,6 +94,17 @@ public class PersonalizedRetrievalAugmentor implements RetrievalAugmentor, Suppl
             .contents(contents)
             .chatMessage(request.chatMessage())
             .build();
+    }
+
+    private List<String> questionAsStringList(String question) {
+        return Arrays.stream(question.split(" ")).filter(a -> !a.equals(" ")).toList();
+    }
+
+    private static String getQuestion(AugmentationRequest request) {
+        String text = request.chatMessage().toString();
+        int index = text.indexOf("text");
+        String question = text.substring(index).split("}")[0].split("=")[1].replace("\"", "").trim();
+        return question;
     }
 
     private Double score(TextSegment segment, String question, List<String> dogs) {
