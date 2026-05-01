@@ -12,6 +12,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -35,7 +36,7 @@ public class PersonalizedRetrievalAugmentor implements RetrievalAugmentor, Suppl
         String question = getQuestion(request);
 
         // 🔥 busca no grafo
-        List<String> dogs = graphRag.search(userId, question);
+        List<String> dogs = graphRag.search(userId, questionAsStringList(question));
 
         // 🔥 embedding da query
         var queryEmbedding = embeddingModel.embed(question).content();
@@ -93,6 +94,10 @@ public class PersonalizedRetrievalAugmentor implements RetrievalAugmentor, Suppl
             .contents(contents)
             .chatMessage(request.chatMessage())
             .build();
+    }
+
+    private List<String> questionAsStringList(String question) {
+        return Arrays.stream(question.split(" ")).filter(a -> !a.equals(" ")).toList();
     }
 
     private static String getQuestion(AugmentationRequest request) {
