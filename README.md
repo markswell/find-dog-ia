@@ -50,15 +50,20 @@ I've configured a authentication server with keycloak, but you need create a use
 #### obs: to local configuration i've used user and password "admin"
 
 
-### You need have a local ollama instance
+### You need have a local llama.cc instance
 
 ```shell Strinm
-ollama run gpt-oss:20b
+/opt/llama.cpp/build/bin/llama-server \
+  -m ~/models/qwen/Qwen2.5-7B-Instruct-Q4_K_M.gguf \
+  --host 127.0.0.1 \
+  --port 9999 \
+  -c 16384 \
+  -t 8 \
+  --parallel 4 \
+  --cont-batching
 ```
 
-#### obs: to run ollama to gpt-oss:20b requires almost 17 GB of RAM so you can use someone else model like phi3:latest changing the configuration at application.yaml
-
-#### obs 2: Use LLM model locally can be really slow, to real product you could use a real LLM  provider like 'OpenAI' or 'Deepseek'
+#### obs: Use LLM model locally can be really slow, to real product you could use a real LLM  provider like 'OpenAI' or 'Deepseek'
 
 ### Running the application in dev mode
 
