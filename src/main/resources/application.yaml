@@ -1,13 +1,28 @@
 quarkus:
   level: INFO
+
   langchain4j:
     neo4j:
       dimension: 768
-    ollama:
-      base-url: http://localhost:11434/
+
+    # CHAT MODEL -> llama.cpp (OpenAI compatible)
+    openai:
+      base-url: http://localhost:9999/v1
+      api-key: dummy
       timeout: 3000s
+
       chat-model:
-        model-id: gpt-oss
+        model-name: Qwen2.5-7B-Instruct-Q4_K_M
+        temperature: 0.2
+        max-tokens: 2048
+        log-requests: true
+        log-responses: true
+
+    # EMBEDDING -> Ollama
+    ollama:
+      base-url: http://localhost:11434
+      timeout: 3000s
+
       embedding-model:
         model-id: nomic-embed-text
 

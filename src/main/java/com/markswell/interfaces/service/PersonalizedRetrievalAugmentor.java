@@ -71,8 +71,8 @@ public class PersonalizedRetrievalAugmentor implements RetrievalAugmentor, Suppl
 
 
         for (TextSegment s : ranked) {
-            String dog = s.metadata().getString("dog");
-            String temperamento = s.metadata().getString("temperamento");
+            var dog = s.metadata().getString("dog");
+            var temperamento = s.metadata().getString("temperamento");
 
             contextBuilder.append("""
                     Dog: %s
@@ -85,9 +85,9 @@ public class PersonalizedRetrievalAugmentor implements RetrievalAugmentor, Suppl
                     s.text()));
         }
 
-        String context = contextBuilder.toString();
-        Content content = Content.from(context);
-        List<Content> contents = new ArrayList<>();
+        var context = contextBuilder.toString();
+        var content = Content.from(context);
+        var contents = new ArrayList<Content>();
         contents.add(content);
 
         return AugmentationResult.builder()
@@ -103,25 +103,27 @@ public class PersonalizedRetrievalAugmentor implements RetrievalAugmentor, Suppl
     private static String getQuestion(AugmentationRequest request) {
         String text = request.chatMessage().toString();
         int index = text.indexOf("text");
-        String question = text.substring(index).split("}")[0].split("=")[1].replace("\"", "").trim();
-        return question;
+        return text.substring(index)
+                .split("}")[0].split("=")[1]
+                .replace("\"", "")
+                .trim();
     }
 
     private Double score(TextSegment segment, String question, List<String> dogs) {
         double score = 0;
 
-        String text = segment.text().toLowerCase();
-        String q = question.toLowerCase();
+        var text = segment.text().toLowerCase();
+        var q = question.toLowerCase();
 
         // 1️⃣ match com cães recomendados pelo grafo
-        for (String dog : dogs) {
+        for (var dog : dogs) {
             if (text.contains(dog.toLowerCase())) {
                 score += 3;
             }
         }
 
         // 2️⃣ keyword overlap
-        for (String token : q.replaceAll("[^a-z ]","").split("\\s+")) {
+        for (var token : q.replaceAll("[^a-z ]","").split("\\s+")) {
             if (text.contains(token)) {
                 score += 1;
             }
