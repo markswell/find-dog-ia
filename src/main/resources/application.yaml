@@ -1,11 +1,35 @@
 quarkus:
-  level: INFO
 
+  log:
+    level: INFO
+
+  ##################################################
+  # OpenTelemetry
+  ##################################################
+  otel:
+    enabled: true
+
+    logs:
+      enabled: true
+
+    metrics:
+      enabled: true
+
+    traces:
+      enabled: true
+
+    exporter:
+      otlp:
+        endpoint: http://localhost:4317
+
+  ##################################################
+  # LangChain4j
+  ##################################################
   langchain4j:
+
     neo4j:
       dimension: 768
 
-    # CHAT MODEL -> llama.cpp (OpenAI compatible)
     openai:
       base-url: http://localhost:9999/v1
       api-key: dummy
@@ -18,7 +42,6 @@ quarkus:
         log-requests: true
         log-responses: true
 
-    # EMBEDDING -> Ollama
     ollama:
       base-url: http://localhost:11434
       timeout: 3000s
@@ -26,28 +49,42 @@ quarkus:
       embedding-model:
         model-id: nomic-embed-text
 
+  ##################################################
+  # Neo4j
+  ##################################################
   neo4j:
     uri: bolt://localhost:7687
+
     authentication:
       username: neo4j
       password: test1234
 
+  ##################################################
+  # Keycloak / OIDC
+  ##################################################
   oidc:
     auth-server-url: http://localhost:8088/realms/find-dog-ia
     application-type: service
     client-id: find-dog-client-id
+
     credentials:
       secret: LHJe20fo3Nx4y0SwoXD8sqbAeSkFAVKH
+
     roles:
       role-claim-path: realm_access/roles
       role-claim-separator: " "
 
+  ##################################################
+  # Security
+  ##################################################
   http:
     auth:
       permission:
+
         public:
           paths: /hello
           policy: permit
+
         secured:
           paths: /*
           policy: authenticated

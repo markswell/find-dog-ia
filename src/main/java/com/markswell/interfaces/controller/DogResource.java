@@ -10,9 +10,14 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 @Path("/assistant")
 public class DogResource {
+
+    private final Logger LOG = LoggerFactory.getLogger(DogResource.class);
 
     @Inject
     private DogAssistant dogAssistant;
@@ -28,7 +33,7 @@ public class DogResource {
     @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.TEXT_PLAIN)
     public String chat(String message) {
-        System.out.println(message);
+        LOG.info("Mensagem recebida: ".concat(message));
         String user = identity.getPrincipal().getName();
         profileService.updateProfile(user, message);
         return dogAssistant.chat(user, message);
