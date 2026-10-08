@@ -4,6 +4,7 @@ package com.markswell.interfaces.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.markswell.domain.model.UserProfile;
 import com.markswell.infraestructure.persistence.UserProfileRepository;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -17,6 +18,7 @@ public class UserProfileService {
 
     ObjectMapper mapper = new ObjectMapper();
 
+    @WithSpan("user.updateUser")
     public void updateProfile(String userId, String json) {
         try {
 

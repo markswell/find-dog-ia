@@ -2,6 +2,7 @@ package com.markswell.interfaces.service;
 
 import com.markswell.domain.model.UserProfile;
 import com.markswell.infraestructure.persistence.GraphRepository;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -17,6 +18,7 @@ public class PersonalizedGraphRagService {
     @Inject
     UserProfileService profileService;
 
+    @WithSpan("rag.graphquery")
     public List<String> search(String userId, List<String> question) {
 
         UserProfile profile = profileService.get(userId);
