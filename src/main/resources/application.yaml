@@ -1,7 +1,13 @@
 quarkus:
-
   log:
     level: INFO
+
+  ##################################################
+  # Redis
+  ##################################################
+  redis:
+    hosts: redis://localhost:6379
+    password: test1234
 
   ##################################################
   # OpenTelemetry
@@ -29,6 +35,12 @@ quarkus:
 
     neo4j:
       dimension: 768
+
+    chat-model:
+      provider: openai
+
+    embedding-model:
+      provider: ollama
 
     openai:
       base-url: http://localhost:9999/v1
@@ -67,8 +79,8 @@ quarkus:
     application-type: service
     client-id: find-dog-client-id
 
-    credentials:
-      secret: LHJe20fo3Nx4y0SwoXD8sqbAeSkFAVKH
+#    credentials:
+#      secret: LHJe20fo3Nx4y0SwoXD8sqbAeSkFAVKH
 
     roles:
       role-claim-path: realm_access/roles
@@ -88,3 +100,18 @@ quarkus:
         secured:
           paths: /*
           policy: authenticated
+
+##################################################
+# Application - Redis keys (mapped by RedisConfig)
+##################################################
+redis:
+  keys:
+    input-tokens: "userId:%s:tokens:input:total"
+    output-tokens: "userId:%s:tokens:output:total"
+    total-tokens: "userId:%s:tokens:total"
+
+##################################################
+# Application - Token limit
+##################################################
+token:
+  limit: 500000

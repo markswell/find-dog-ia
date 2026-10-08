@@ -50,7 +50,7 @@ I've configured a authentication server with keycloak, but you need create a use
 #### obs: to local configuration i've used user and password "admin"
 
 
-### You need have a local llama.cc instance
+### You need have a local llama.cc instance (my local configuration)
 
 ```shell Strinm
 /opt/llama.cpp/build/bin/llama-server \
