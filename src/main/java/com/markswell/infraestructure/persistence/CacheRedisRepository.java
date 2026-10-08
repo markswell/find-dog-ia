@@ -15,7 +15,7 @@ public class CacheRedisRepository implements CacheRepository {
 
     @Override
     public long get(String key) {
-        return counters.get(key);
+        return counters.get(key) != null ? counters.get(key) : 0;
     }
 
     @Override

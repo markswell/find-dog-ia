@@ -23,12 +23,6 @@ public class GraphRepository {
         }
     }
 
-    public void execute(String cypher) {
-        try (Session session = driver.session()) {
-            session.run(cypher);
-        }
-    }
-
     @PreDestroy
     public void close() {
         driver.close();
