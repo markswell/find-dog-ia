@@ -17,6 +17,7 @@ import org.neo4j.driver.Session;
 
 import java.nio.file.Paths;
 import java.security.MessageDigest;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.List;
@@ -70,18 +71,7 @@ public class DocumentRagIngest {
                   }
                 }
                 """);
-            session.run("""
-                CREATE INDEX dog_name IF NOT EXISTS
-                FOR (d:Dog) ON (d.nome)
-                """);
-            session.run("""
-                CREATE INDEX size_name IF NOT EXISTS
-                FOR (s:Size) ON (s.name)
-                """);
-            session.run("""
-                CREATE INDEX env_name IF NOT EXISTS
-                FOR (e:Environment) ON (e.name)
-                """);
+            prepareGraphSchema(session);
             session.run("CALL db.awaitIndexes()");
             documents.forEach(d -> executorService.execute(() -> {
                 String fileName = d.metadata().getString("file_name");
@@ -89,10 +79,12 @@ public class DocumentRagIngest {
                 try {
                     String hash = hash(d.text());
 
+                    // grafo é sempre sincronizado (MERGE idempotente) para manter o modelo atualizado
+                    createDogNode(d);
+
                     if (documentExists(hash)) {
                         System.out.println("Documento já ingerido".concat(fileName));
                     } else {
-                        createDogNode(d);
                         d.metadata().put("hash", hash);
                         System.out.println("ingerindo documento. ".concat(fileName));
                         ingestor.ingest(d);
@@ -104,7 +96,57 @@ public class DocumentRagIngest {
                 }
             }));
         }
+    }
 
+    /**
+     * Garante unicidade dos nós do grafo. Sem constraint, MERGE concorrente (virtual threads)
+     * cria nós duplicados (ex.: vários :Size {name:'medio'}) e o grafo deixa de ser conectado.
+     * Os nós :Size/:Environment são derivados dos .md, então são recriados a cada startup
+     * por createDogNode (isso também remove valores antigos concatenados como "casa|apartamento").
+     */
+    private void prepareGraphSchema(Session session) {
+        session.run("DROP INDEX dog_name IF EXISTS");
+        session.run("DROP INDEX size_name IF EXISTS");
+        session.run("DROP INDEX env_name IF EXISTS");
+
+        session.run("""
+                MATCH (n)
+                WHERE n:Size OR n:Environment
+                DETACH DELETE n
+                """);
+        session.run("""
+                MATCH (d:Dog)
+                WITH d.nome AS nome, collect(d) AS dogs
+                WHERE size(dogs) > 1
+                UNWIND tail(dogs) AS duplicated
+                DETACH DELETE duplicated
+                """);
+
+        session.run("""
+                CREATE CONSTRAINT dog_nome_unique IF NOT EXISTS
+                FOR (d:Dog) REQUIRE d.nome IS UNIQUE
+                """);
+        session.run("""
+                CREATE CONSTRAINT size_name_unique IF NOT EXISTS
+                FOR (s:Size) REQUIRE s.name IS UNIQUE
+                """);
+        session.run("""
+                CREATE CONSTRAINT env_name_unique IF NOT EXISTS
+                FOR (e:Environment) REQUIRE e.name IS UNIQUE
+                """);
+    }
+
+    /** "casa_com_quintal|apartamento| casa" -> [casa_com_quintal, apartamento, casa] */
+    static List<String> splitValues(String value) {
+        if (value == null || value.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(value.split("\\|"))
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .filter(v -> !v.isEmpty())
+                .distinct()
+                .toList();
     }
 
     private String hash(String content) throws Exception {
@@ -162,22 +204,30 @@ public class DocumentRagIngest {
             Map<String, Object> params = new HashMap<>();
             String nome = d.metadata().getString("nome");
             params.put("nome", nome);
-            params.put("id", nome.concat("_dog"));
-            params.put("porte", d.metadata().getString("porte"));
-            params.put("ambiente", d.metadata().getString("ambiente_ideal"));
+            params.put("portes", splitValues(d.metadata().getString("porte")));
+            params.put("ambientes", splitValues(d.metadata().getString("ambiente_ideal")));
             params.put("temperamento", d.metadata().getString("temperamento"));
             params.put("descricao", d.text());
 
-            session.run("""
+            session.executeWriteWithoutResult(tx -> tx.run("""
                     MERGE (dog:Dog {nome:$nome})
-                    SET dog.descricao = $descricao
-                    
-                    MERGE (size:Size {name:$porte})
-                    MERGE (env:Environment {name:$ambiente})
-                    
-                    MERGE (dog)-[:HAS_SIZE]->(size)
-                    MERGE (dog)-[:GOOD_FOR]->(env)
-                    """, params);
+                    SET dog.descricao = $descricao,
+                        dog.temperamento = $temperamento
+
+                    WITH dog
+                    OPTIONAL MATCH (dog)-[r:HAS_SIZE|GOOD_FOR]->()
+                    DELETE r
+
+                    WITH DISTINCT dog
+                    FOREACH (porte IN $portes |
+                        MERGE (size:Size {name:porte})
+                        MERGE (dog)-[:HAS_SIZE]->(size)
+                    )
+                    FOREACH (ambiente IN $ambientes |
+                        MERGE (env:Environment {name:ambiente})
+                        MERGE (dog)-[:GOOD_FOR]->(env)
+                    )
+                    """, params));
         }
     }
 

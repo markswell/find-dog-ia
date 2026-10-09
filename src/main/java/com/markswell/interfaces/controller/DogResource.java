@@ -57,7 +57,7 @@ public class DogResource {
             long tokens = cacheRepository.get(redisConfig.totalTokens().formatted(subId));
 
             if (tokens > tokenLimit) {
-                return "Usuário exedeu cota de tokens!";
+                return "Usuário excedeu cota de tokens!";
             }
 
 
