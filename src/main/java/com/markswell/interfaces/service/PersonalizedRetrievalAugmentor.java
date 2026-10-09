@@ -1,23 +1,38 @@
 package com.markswell.interfaces.service;
 
+import com.markswell.domain.model.DogGraphHit;
+import com.markswell.infraestructure.persistence.CacheRepository;
+import com.markswell.interfaces.controller.DogResource;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
-import dev.langchain4j.rag.*;
-
+import dev.langchain4j.rag.AugmentationRequest;
+import dev.langchain4j.rag.AugmentationResult;
+import dev.langchain4j.rag.RetrievalAugmentor;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
 import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
+import dev.langchain4j.store.embedding.EmbeddingSearchResult;
 import dev.langchain4j.store.embedding.EmbeddingStore;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class PersonalizedRetrievalAugmentor implements RetrievalAugmentor, Supplier<RetrievalAugmentor> {
+
+    @Inject
+    CacheRepository cacheRepository;
 
     @Inject
     EmbeddingStore<TextSegment> store;
@@ -28,6 +43,12 @@ public class PersonalizedRetrievalAugmentor implements RetrievalAugmentor, Suppl
     @Inject
     PersonalizedGraphRagService graphRag;
 
+    private final Logger LOG = LoggerFactory.getLogger(DogResource.class);
+
+    private static final int MODEL_CONTEXT_WINDOW = 8192;
+    private static final int RESERVED_FOR_RESPONSE = 1500;
+    private static final int RESERVED_FOR_SYSTEM_PROMPT = 500;
+
     @Override
     public AugmentationResult augment(AugmentationRequest request) {
 
@@ -35,43 +56,43 @@ public class PersonalizedRetrievalAugmentor implements RetrievalAugmentor, Suppl
 
         String question = getQuestion(request);
 
-        // 🔥 busca no grafo
-        List<String> dogs = graphRag.search(userId, questionAsStringList(question));
+
+        // 🔥 busca no grafo (entidades da pergunta + perfil do usuário)
+        List<DogGraphHit> graphHits = graphRag.search(userId, question);
+
+        Map<String, Long> graphScores = graphHits.stream()
+                .collect(Collectors.toMap(
+                        h -> GraphEntityExtractor.normalize(h.nome()),
+                        DogGraphHit::score,
+                        Math::max));
 
         // 🔥 embedding da query
-        var queryEmbedding = embeddingModel.embed(question).content();
+        var results = getSegmentEmbeddingSearchResult(question);
 
-        // 🔥 NOVA API de search
-        EmbeddingSearchRequest searchRequest = EmbeddingSearchRequest.builder()
-                .queryEmbedding(queryEmbedding)
-                .maxResults(10)
-                .build();
-
-        var results = store.search(searchRequest);
-
-        List<TextSegment> segments = results.matches().stream()
+        // 🔥 re-ranking (grafo + similaridade vetorial + overlap de termos)
+        List<TextSegment> selectedSegments = results.matches().stream()
+                .sorted(Comparator.comparingDouble(
+                        (EmbeddingMatch<TextSegment> m) -> score(m, question, graphScores)).reversed())
                 .map(EmbeddingMatch::embedded)
                 .toList();
 
-        // 🔥 re-ranking
-        List<TextSegment> ranked = segments.stream()
-                .sorted((a,b) ->
-                        Double.compare(
-                                score(b, question, dogs),
-                                score(a, question, dogs)
-                        )
-                )
-                .limit(5)
-                .toList();
+        LOG.info("Graph hits: " + graphHits.size() + " | Chunks selected: " + selectedSegments.size());
+
 
         // 🔥 transforma em conteúdo para o LLM
         StringBuilder contextBuilder = new StringBuilder();
 
+        if (!graphHits.isEmpty()) {
+            contextBuilder.append("Cães recomendados pelo grafo de conhecimento (porte/ambiente compatíveis):\n");
+            graphHits.forEach(h -> contextBuilder.append(h.toContext()).append('\n'));
+            contextBuilder.append('\n');
+        }
+
         contextBuilder.append("Informações relevantes sobre cães:\n\n");
 
 
-        for (TextSegment s : ranked) {
-            var dog = s.metadata().getString("dog");
+        for (TextSegment s : selectedSegments) {
+            var dog = s.metadata().getString("nome");
             var temperamento = s.metadata().getString("temperamento");
 
             contextBuilder.append("""
@@ -96,8 +117,18 @@ public class PersonalizedRetrievalAugmentor implements RetrievalAugmentor, Suppl
             .build();
     }
 
-    private List<String> questionAsStringList(String question) {
-        return Arrays.stream(question.split(" ")).filter(a -> !a.equals(" ")).toList();
+    @WithSpan("rag.embeddingSearch")
+    public EmbeddingSearchResult<TextSegment> getSegmentEmbeddingSearchResult(String question) {
+        var queryEmbedding = embeddingModel.embed(question).content();
+
+        // 🔥 NOVA API de search
+        EmbeddingSearchRequest searchRequest = EmbeddingSearchRequest.builder()
+                .queryEmbedding(queryEmbedding)
+                .maxResults(10)
+                .build();
+
+        var results = store.search(searchRequest);
+        return results;
     }
 
     private static String getQuestion(AugmentationRequest request) {
@@ -109,23 +140,19 @@ public class PersonalizedRetrievalAugmentor implements RetrievalAugmentor, Suppl
                 .trim();
     }
 
-    private Double score(TextSegment segment, String question, List<String> dogs) {
-        double score = 0;
+    static double score(EmbeddingMatch<TextSegment> match, String question, Map<String, Long> graphScores) {
+        TextSegment segment = match.embedded();
+        double score = match.score() == null ? 0 : match.score();
 
-        var text = segment.text().toLowerCase();
-        var q = question.toLowerCase();
+        // 1️⃣ chunk pertence a um cão recomendado pelo grafo (via metadata, não via texto)
+        String dog = GraphEntityExtractor.normalize(segment.metadata().getString("nome"));
+        score += graphScores.getOrDefault(dog, 0L);
 
-        // 1️⃣ match com cães recomendados pelo grafo
-        for (var dog : dogs) {
-            if (text.contains(dog.toLowerCase())) {
-                score += 3;
-            }
-        }
-
-        // 2️⃣ keyword overlap
-        for (var token : q.replaceAll("[^a-z ]","").split("\\s+")) {
-            if (text.contains(token)) {
-                score += 1;
+        // 2️⃣ keyword overlap (normalizado, sem acentos, ignorando palavras curtas)
+        Set<String> textTokens = new HashSet<>(GraphEntityExtractor.tokenize(segment.text()));
+        for (var token : GraphEntityExtractor.tokenize(question)) {
+            if (token.length() > 3 && textTokens.contains(token)) {
+                score += 0.5;
             }
         }
 
