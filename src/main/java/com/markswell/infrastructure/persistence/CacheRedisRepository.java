@@ -1,4 +1,4 @@
-package com.markswell.infraestructure.persistence;
+package com.markswell.infrastructure.persistence;
 
 import io.quarkus.redis.datasource.RedisDataSource;
 import io.quarkus.redis.datasource.value.ValueCommands;

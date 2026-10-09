@@ -1,8 +1,9 @@
-package com.markswell.interfaces.service;
+package com.markswell.infrastructure.rag;
 
 import com.markswell.domain.model.DogGraphHit;
-import com.markswell.infraestructure.persistence.CacheRepository;
-import com.markswell.interfaces.controller.DogResource;
+import com.markswell.application.service.PersonalizedGraphRagService;
+import com.markswell.domain.service.GraphEntityExtractor;
+import com.markswell.infrastructure.persistence.CacheRepository;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.rag.AugmentationRequest;
@@ -43,7 +44,7 @@ public class PersonalizedRetrievalAugmentor implements RetrievalAugmentor, Suppl
     @Inject
     PersonalizedGraphRagService graphRag;
 
-    private final Logger LOG = LoggerFactory.getLogger(DogResource.class);
+    private final Logger LOG = LoggerFactory.getLogger(PersonalizedRetrievalAugmentor.class);
 
     private static final int MODEL_CONTEXT_WINDOW = 8192;
     private static final int RESERVED_FOR_RESPONSE = 1500;

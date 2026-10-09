@@ -1,9 +1,10 @@
-package com.markswell.interfaces.service;
+package com.markswell.application.service;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.markswell.domain.model.UserProfile;
-import com.markswell.infraestructure.persistence.UserProfileRepository;
+import com.markswell.domain.service.GraphEntityExtractor;
+import com.markswell.infrastructure.persistence.UserProfileRepository;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

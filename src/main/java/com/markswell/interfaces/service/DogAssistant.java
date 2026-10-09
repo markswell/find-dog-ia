@@ -4,6 +4,7 @@ package com.markswell.interfaces.service;
 import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
 import io.quarkiverse.langchain4j.RegisterAiService;
+import com.markswell.infrastructure.rag.PersonalizedRetrievalAugmentor;
 
 @RegisterAiService(retrievalAugmentor = PersonalizedRetrievalAugmentor.class)
 public interface DogAssistant {

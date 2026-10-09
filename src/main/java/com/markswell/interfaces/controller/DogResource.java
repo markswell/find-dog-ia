@@ -1,9 +1,9 @@
 package com.markswell.interfaces.controller;
 
-import com.markswell.infraestructure.config.RedisConfig;
-import com.markswell.infraestructure.persistence.CacheRepository;
+import com.markswell.infrastructure.config.RedisConfig;
+import com.markswell.infrastructure.persistence.CacheRepository;
+import com.markswell.application.service.UserProfileService;
 import com.markswell.interfaces.service.DogAssistant;
-import com.markswell.interfaces.service.UserProfileService;
 import io.quarkiverse.langchain4j.runtime.ContextLocals;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.annotation.security.RolesAllowed;

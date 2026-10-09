@@ -1,4 +1,4 @@
-package com.markswell.infraestructure.config;
+package com.markswell.infrastructure.ingestion;
 
 import org.junit.jupiter.api.Test;
 

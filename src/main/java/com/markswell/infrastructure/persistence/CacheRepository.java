@@ -1,4 +1,4 @@
-package com.markswell.infraestructure.persistence;
+package com.markswell.infrastructure.persistence;
 
 public interface CacheRepository {
 

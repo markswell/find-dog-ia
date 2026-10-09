@@ -1,4 +1,4 @@
-package com.markswell.infraestructure.config;
+package com.markswell.infrastructure.config;
 
 import io.smallrye.config.ConfigMapping;
 

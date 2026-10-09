@@ -1,4 +1,4 @@
-package com.markswell.infraestructure.config;
+package com.markswell.infrastructure.ingestion;
 
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentSplitter;
