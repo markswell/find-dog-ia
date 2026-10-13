@@ -1,4 +1,4 @@
-package com.markswell;
+package com.markswell.interfaces.controller;
 
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;

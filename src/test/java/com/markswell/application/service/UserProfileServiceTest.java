@@ -1,7 +1,9 @@
-package com.markswell.interfaces.service;
+package com.markswell.application.service;
+
+import com.markswell.domain.service.GraphEntityExtractor;
 
 import com.markswell.domain.model.UserProfile;
-import com.markswell.infraestructure.persistence.UserProfileRepository;
+import com.markswell.infrastructure.persistence.UserProfileRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

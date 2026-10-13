@@ -1,14 +1,16 @@
-package com.markswell.interfaces.service;
+package com.markswell.infrastructure.rag;
 
 import com.markswell.domain.model.DogGraphHit;
-import com.markswell.infraestructure.persistence.CacheRepository;
-import com.markswell.interfaces.controller.DogResource;
+import com.markswell.application.service.PersonalizedGraphRagService;
+import com.markswell.domain.service.GraphEntityExtractor;
+import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.rag.AugmentationRequest;
 import dev.langchain4j.rag.AugmentationResult;
 import dev.langchain4j.rag.RetrievalAugmentor;
 import dev.langchain4j.rag.content.Content;
+import dev.langchain4j.rag.content.injector.DefaultContentInjector;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
 import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
 import dev.langchain4j.store.embedding.EmbeddingSearchResult;
@@ -32,9 +34,6 @@ import java.util.stream.Collectors;
 public class PersonalizedRetrievalAugmentor implements RetrievalAugmentor, Supplier<RetrievalAugmentor> {
 
     @Inject
-    CacheRepository cacheRepository;
-
-    @Inject
     EmbeddingStore<TextSegment> store;
 
     @Inject
@@ -43,7 +42,7 @@ public class PersonalizedRetrievalAugmentor implements RetrievalAugmentor, Suppl
     @Inject
     PersonalizedGraphRagService graphRag;
 
-    private final Logger LOG = LoggerFactory.getLogger(DogResource.class);
+    private final Logger LOG = LoggerFactory.getLogger(PersonalizedRetrievalAugmentor.class);
 
     private static final int MODEL_CONTEXT_WINDOW = 8192;
     private static final int RESERVED_FOR_RESPONSE = 1500;
@@ -113,7 +112,7 @@ public class PersonalizedRetrievalAugmentor implements RetrievalAugmentor, Suppl
 
         return AugmentationResult.builder()
             .contents(contents)
-            .chatMessage(request.chatMessage())
+            .chatMessage(new DefaultContentInjector().inject(contents, request.chatMessage()))
             .build();
     }
 
@@ -132,12 +131,7 @@ public class PersonalizedRetrievalAugmentor implements RetrievalAugmentor, Suppl
     }
 
     private static String getQuestion(AugmentationRequest request) {
-        String text = request.chatMessage().toString();
-        int index = text.indexOf("text");
-        return text.substring(index)
-                .split("}")[0].split("=")[1]
-                .replace("\"", "")
-                .trim();
+        return ((UserMessage) request.chatMessage()).singleText();
     }
 
     static double score(EmbeddingMatch<TextSegment> match, String question, Map<String, Long> graphScores) {

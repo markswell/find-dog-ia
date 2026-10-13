@@ -61,6 +61,10 @@ quarkus:
       embedding-model:
         model-id: nomic-embed-text
 
+    log-requests: true
+    log-responses: true
+
+
   ##################################################
   # Neo4j
   ##################################################

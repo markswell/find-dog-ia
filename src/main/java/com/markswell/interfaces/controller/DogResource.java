@@ -1,9 +1,9 @@
 package com.markswell.interfaces.controller;
 
-import com.markswell.infraestructure.config.RedisConfig;
-import com.markswell.infraestructure.persistence.CacheRepository;
+import com.markswell.infrastructure.config.RedisConfig;
+import com.markswell.infrastructure.persistence.CacheRepository;
+import com.markswell.application.service.UserProfileService;
 import com.markswell.interfaces.service.DogAssistant;
-import com.markswell.interfaces.service.UserProfileService;
 import io.quarkiverse.langchain4j.runtime.ContextLocals;
 import io.quarkus.security.identity.SecurityIdentity;
 import jakarta.annotation.security.RolesAllowed;
@@ -15,6 +15,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.jwt.JsonWebToken;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,16 +29,16 @@ public class DogResource {
     long tokenLimit;
 
     @Inject
-    private DogAssistant dogAssistant;
+    DogAssistant dogAssistant;
 
     @Inject
-    private UserProfileService profileService;
+    UserProfileService profileService;
 
     @Inject
-    private CacheRepository cacheRepository;
+    CacheRepository cacheRepository;
 
     @Inject
-    private RedisConfig redisConfig;
+    RedisConfig redisConfig;
 
     @Inject
     SecurityIdentity identity;
@@ -51,6 +52,15 @@ public class DogResource {
         String user = identity.getPrincipal().getName();
         profileService.updateProfile(user, message);
 
+        String errorMessage = validateTokenLimit();
+        if (errorMessage != null) {
+            return errorMessage;
+        }
+
+        return dogAssistant.chat(user, message);
+    }
+
+    private @Nullable String validateTokenLimit() {
         if (identity.getPrincipal() instanceof JsonWebToken jwt) {
             String subId = jwt.getSubject();
 
@@ -60,10 +70,9 @@ public class DogResource {
                 return "Usuário excedeu cota de tokens!";
             }
 
-
             ContextLocals.put("userId", subId);
         }
-        return dogAssistant.chat(user, message);
+        return null;
     }
 
 }
