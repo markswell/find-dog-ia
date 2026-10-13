@@ -1,8 +1,9 @@
-package com.markswell.interfaces.service;
+package com.markswell.application.service;
 
 import com.markswell.domain.model.DogGraphHit;
 import com.markswell.domain.model.UserProfile;
-import com.markswell.infraestructure.persistence.GraphRepository;
+import com.markswell.domain.service.GraphEntityExtractor;
+import com.markswell.infrastructure.persistence.GraphRepository;
 import io.opentelemetry.instrumentation.annotations.WithSpan;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

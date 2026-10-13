@@ -1,4 +1,4 @@
-package com.markswell.interfaces.service;
+package com.markswell.domain.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
 

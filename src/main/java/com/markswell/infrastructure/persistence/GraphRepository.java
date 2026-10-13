@@ -1,4 +1,4 @@
-package com.markswell.infraestructure.persistence;
+package com.markswell.infrastructure.persistence;
 
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;

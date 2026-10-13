@@ -1,4 +1,4 @@
-package com.markswell.infraestructure.persistence;
+package com.markswell.infrastructure.persistence;
 
 import com.markswell.domain.model.UserProfile;
 import jakarta.enterprise.context.ApplicationScoped;

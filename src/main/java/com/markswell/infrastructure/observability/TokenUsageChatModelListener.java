@@ -1,6 +1,7 @@
-package com.markswell.infraestructure.config;
+package com.markswell.infrastructure.observability;
 
-import com.markswell.infraestructure.persistence.CacheRepository;
+import com.markswell.infrastructure.config.RedisConfig;
+import com.markswell.infrastructure.persistence.CacheRepository;
 import dev.langchain4j.model.chat.listener.ChatModelErrorContext;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.chat.listener.ChatModelResponseContext;
